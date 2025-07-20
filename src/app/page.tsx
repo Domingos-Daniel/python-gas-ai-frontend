@@ -30,10 +30,10 @@ export default function Home() {
                 />
               </svg>
             </div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent mb-4">
+            <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent mb-3 sm:mb-4 px-4">
               Assistente de Energia Angola
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
               Converse sobre o setor energético angolano com informações das principais empresas
             </p>
           </header>
