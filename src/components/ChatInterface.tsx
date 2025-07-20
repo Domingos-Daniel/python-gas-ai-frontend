@@ -268,36 +268,44 @@ export default function ChatInterface() {
                     
                     {/* Action buttons for assistant messages */}
                     {message.role === "assistant" && (
-                      <div className="absolute -right-2 top-2 flex flex-col gap-1">
+                      <div className="flex gap-2 mt-3 pt-2 border-t border-slate-700/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         {/* Copy with formatting button */}
                         <button
                           onClick={() => handleCopyMessage(message.content, message.id, true)}
-                          className="w-8 h-8 bg-slate-700/90 hover:bg-slate-600/90 border border-slate-600/50 rounded-lg flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 backdrop-blur-sm group"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/70 hover:bg-slate-600/70 border border-slate-600/30 rounded-lg text-xs transition-all duration-200 hover:scale-105 backdrop-blur-sm group/btn"
                           title="Copiar com formatação Markdown"
                         >
                           {copiedMessageId === message.id ? (
-                            <Check className="h-4 w-4 text-emerald-400" />
+                            <>
+                              <Check className="h-3 w-3 text-emerald-400" />
+                              <span className="text-emerald-400 font-medium">Copiado!</span>
+                            </>
                           ) : (
-                            <FileText className="h-4 w-4 text-slate-300 group-hover:text-white" />
+                            <>
+                              <FileText className="h-3 w-3 text-slate-300 group-hover/btn:text-white" />
+                              <span className="text-slate-300 group-hover/btn:text-white font-medium">Markdown</span>
+                            </>
                           )}
                         </button>
                         
                         {/* Copy plain text button */}
                         <button
                           onClick={() => handleCopyMessage(message.content, message.id, false)}
-                          className="w-8 h-8 bg-slate-700/90 hover:bg-slate-600/90 border border-slate-600/50 rounded-lg flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 backdrop-blur-sm group"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/70 hover:bg-slate-600/70 border border-slate-600/30 rounded-lg text-xs transition-all duration-200 hover:scale-105 backdrop-blur-sm group/btn"
                           title="Copiar texto simples"
                         >
-                          <Copy className="h-4 w-4 text-slate-300 group-hover:text-white" />
+                          <Copy className="h-3 w-3 text-slate-300 group-hover/btn:text-white" />
+                          <span className="text-slate-300 group-hover/btn:text-white font-medium">Texto</span>
                         </button>
                         
                         {/* Share button */}
                         <button
                           onClick={() => handleShareMessage(message.content, true)}
-                          className="w-8 h-8 bg-slate-700/90 hover:bg-slate-600/90 border border-slate-600/50 rounded-lg flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 backdrop-blur-sm group"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/70 hover:bg-slate-600/70 border border-slate-600/30 rounded-lg text-xs transition-all duration-200 hover:scale-105 backdrop-blur-sm group/btn"
                           title="Compartilhar com formatação"
                         >
-                          <Share2 className="h-4 w-4 text-slate-300 group-hover:text-white" />
+                          <Share2 className="h-3 w-3 text-slate-300 group-hover/btn:text-white" />
+                          <span className="text-slate-300 group-hover/btn:text-white font-medium">Compartilhar</span>
                         </button>
                       </div>
                     )}
