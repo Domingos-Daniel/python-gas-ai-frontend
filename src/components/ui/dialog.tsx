@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 interface DialogProps {
@@ -20,7 +20,6 @@ interface DialogHeaderProps {
 
 interface DialogTitleProps {
   children: React.ReactNode;
-  className?: string;
 }
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
@@ -76,9 +75,9 @@ export function DialogHeader({ children }: DialogHeaderProps) {
   );
 }
 
-export function DialogTitle({ children, className = "" }: DialogTitleProps) {
+export function DialogTitle({ children }: DialogTitleProps) {
   return (
-    <h2 className={`text-xl font-semibold text-white ${className}`}>
+    <h2 className="text-xl font-semibold text-white">
       {children}
     </h2>
   );

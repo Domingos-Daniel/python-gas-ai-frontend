@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { BarChart3, PieChart, TrendingUp, Download, Maximize2 } from "lucide-react";
+import { BarChart3, PieChart, TrendingUp, Download, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +21,7 @@ interface ChartData {
   type: 'pie' | 'bar' | 'line' | 'donut';
   base64: string;
   title?: string;
-  summary?: Record<string, string | undefined>;
+  summary?: any;
 }
 
 export default function ChartRenderer({ content, className = "" }: ChartRendererProps) {
@@ -56,7 +55,7 @@ export default function ChartRenderer({ content, className = "" }: ChartRenderer
   };
   
   // Detectar tipo de gráfico pelo contexto
-  const detectChartType = (text: string, _chartIndex: number): 'pie' | 'bar' | 'line' | 'donut' => {
+  const detectChartType = (text: string, chartIndex: number): 'pie' | 'bar' | 'line' | 'donut' => {
     const lowerText = text.toLowerCase();
     
     if (lowerText.includes('pie') || lowerText.includes('pizza')) return 'pie';
@@ -68,10 +67,10 @@ export default function ChartRenderer({ content, className = "" }: ChartRenderer
   };
   
   // Extrair título do gráfico
-  const extractChartTitle = (text: string, _chartIndex: number): string => {
+  const extractChartTitle = (text: string, chartIndex: number): string => {
     // Procurar por títulos próximos ao gráfico
     const lines = text.split('\n');
-    let title = `Gráfico ${_chartIndex + 1}`;
+    let title = `Gráfico ${chartIndex + 1}`;
     
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].includes('data:image')) {
@@ -95,9 +94,9 @@ export default function ChartRenderer({ content, className = "" }: ChartRenderer
   };
   
   // Extrair resumo dos dados
-  const extractChartSummary = (text: string, _chartIndex: number): Record<string, string | undefined> => {
+  const extractChartSummary = (text: string, chartIndex: number): any => {
     // Procurar por informações de dados próximas ao gráfico
-    const summary: Record<string, string | undefined> = {};
+    const summary: any = {};
     const lines = text.split('\n');
     
     for (let i = 0; i < lines.length; i++) {
@@ -153,7 +152,10 @@ export default function ChartRenderer({ content, className = "" }: ChartRenderer
   };
   
   if (charts.length === 0) {
-    return null; // Não renderizar nada se não houver gráficos
+    // Se não houver gráficos, renderizar apenas o texto limpo
+    return cleanedContent.trim() ? (
+      <MarkdownRenderer content={cleanedContent.trim()} className={className} />
+    ) : null;
   }
   
   return (
@@ -201,12 +203,10 @@ export default function ChartRenderer({ content, className = "" }: ChartRenderer
             
             {/* Imagem do gráfico */}
             <div className="relative group">
-              <Image
+              <img
                 src={chart.base64}
-                alt={chart.title || 'Gráfico'}
-                className="w-full h-auto rounded-lg border border-slate-600/30 shadow-lg transition-transform duration-200 group-hover:scale-[1.02] cursor-pointer"
-                width={800}
-                height={600}
+                alt={chart.title}
+                className="w-full h-auto rounded-lg border border-slate-600/30 shadow-lg transition-transform duration-200 group-hover:scale-[1.02]"
                 onClick={() => setSelectedChart(chart)}
               />
               
@@ -217,7 +217,7 @@ export default function ChartRenderer({ content, className = "" }: ChartRenderer
             </div>
             
             {/* Resumo dos dados (se disponível) */}
-            {chart.summary && Object.keys(chart.summary).length > 0 && (
+            {Object.keys(chart.summary).length > 0 && (
               <div className="mt-3 pt-3 border-t border-slate-700/30">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                   {chart.summary.total && (
@@ -255,12 +255,10 @@ export default function ChartRenderer({ content, className = "" }: ChartRenderer
           
           {selectedChart && (
             <div className="space-y-4">
-              <Image
+              <img
                 src={selectedChart.base64}
-                alt={selectedChart.title || 'Gráfico'}
+                alt={selectedChart.title}
                 className="w-full h-auto rounded-lg border border-slate-600/30"
-                width={1200}
-                height={800}
               />
               
               <div className="flex justify-between items-center">

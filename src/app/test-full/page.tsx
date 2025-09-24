@@ -36,14 +36,8 @@ const detectChartTypes = (question: string): string[] => {
 };
 
 // Simular a função do ChartRenderer para extrair gráficos
-interface ChartData {
-  type: string;
-  base64: string;
-  title: string;
-}
-
-const extractCharts = (text: string): ChartData[] => {
-  const charts: ChartData[] = [];
+const extractCharts = (text: string) => {
+  const charts: any[] = [];
   
   // Padrão para detectar gráficos base64
   const base64Pattern = /data:image\/(png|jpeg|jpg|gif);base64,([A-Za-z0-9+/=]+)/g;
@@ -66,7 +60,7 @@ const extractCharts = (text: string): ChartData[] => {
   return charts;
 };
 
-const detectChartType = (text: string, _chartIndex: number) => {
+const detectChartType = (text: string, chartIndex: number) => {
   const lowerText = text.toLowerCase();
   
   if (lowerText.includes('pie') || lowerText.includes('pizza')) return 'pie';
@@ -77,9 +71,9 @@ const detectChartType = (text: string, _chartIndex: number) => {
   return 'bar'; // default
 };
 
-const extractChartTitle = (text: string, _chartIndex: number) => {
+const extractChartTitle = (text: string, chartIndex: number) => {
   const lines = text.split('\n');
-  let title = `Gráfico ${_chartIndex + 1}`;
+  let title = `Gráfico ${chartIndex + 1}`;
   
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].includes('data:image')) {
