@@ -3,14 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Bot, User, Loader2, ArrowDown, Copy, Share2, Check, FileText } from "lucide-react";
-import MarkdownRenderer from "./MarkdownRenderer";
+import { Send, Bot, User, Loader2, ArrowDown, Copy, Share2, Check, FileText, BarChart3, MessageSquare } from "lucide-react";
+import MessageContentRenderer from "./MessageContentRenderer";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  hasCharts?: boolean;
 }
 
 export default function ChatInterface() {
@@ -19,6 +20,7 @@ export default function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [useAnalysis, setUseAnalysis] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -85,6 +87,39 @@ export default function ChatInterface() {
     }
   };
 
+  // Função para detectar tipo de gráfico solicitado na pergunta
+  const detectChartTypes = (question: string): string[] => {
+    const lowerQuestion = question.toLowerCase();
+    
+    // Mapeamento de palavras-chave para tipos de gráficos
+    const chartKeywords = {
+      'line': ['linha', 'linear', 'tendência', 'tendencia', 'evolução', 'evolucao', 'série temporal', 'serie temporal', 'temporal'],
+      'bar': ['barra', 'barras', 'coluna', 'colunas', 'comparação', 'comparacao', 'versus', 'vs'],
+      'pie': ['pizza', 'torta', 'setor', 'participação', 'participacao', 'percentual', 'proporção', 'proporcao'],
+      'donut': ['donut', 'anel', 'rosquinha', 'rosca'],
+      'kpi': ['kpi', 'indicador', 'métrica', 'metrica', 'dashboard', 'painel'],
+      'production': ['produção', 'producao', 'extracao', 'extração', 'output'],
+      'financial': ['financeiro', 'financeira', 'custos', 'receitas', 'lucros', 'despesas']
+    };
+    
+    const detectedTypes: string[] = [];
+    
+    // Verifica cada tipo de gráfico
+    for (const [chartType, keywords] of Object.entries(chartKeywords)) {
+      if (keywords.some(keyword => lowerQuestion.includes(keyword))) {
+        detectedTypes.push(chartType);
+      }
+    }
+    
+    // Se não detectar nenhum tipo específico, mas pedir "gráfico" genérico
+    if (detectedTypes.length === 0 && lowerQuestion.includes('gráfico')) {
+      return ['bar']; // Padrão para gráfico genérico
+    }
+    
+    // Se detectou tipos, retorna eles, senão retorna os padrões
+    return detectedTypes.length > 0 ? detectedTypes : ["pie", "bar"];
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -102,18 +137,33 @@ export default function ChatInterface() {
 
     try {
       const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
-      const response = await fetch(`${apiUrl}/chat`, {
+      
+      // Escolher endpoint baseado no modo selecionado
+      const endpoint = useAnalysis ? '/analyze' : '/chat';
+      
+      // Detectar tipos de gráficos solicitados na pergunta
+      const detectedChartTypes = detectChartTypes(userMessage.content);
+      
+      const payload = useAnalysis 
+        ? {
+            question: userMessage.content,
+            chart_types: detectedChartTypes,
+            analysis_type: "comprehensive"
+          }
+        : {
+            question: userMessage.content,
+            history: messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }))
+          };
+
+      const response = await fetch(`${apiUrl}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          question: userMessage.content,
-          history: messages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -122,11 +172,15 @@ export default function ChatInterface() {
 
       const data = await response.json();
       
+      // Detectar se a resposta contém gráficos
+      const hasCharts = data.answer && /data:image\/(png|jpeg|jpg|gif);base64,/.test(data.answer);
+      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: data.answer,
         timestamp: new Date(),
+        hasCharts: hasCharts
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -259,7 +313,7 @@ export default function ChatInterface() {
                     }`}
                   >
                     {message.role === "assistant" ? (
-                      <MarkdownRenderer 
+                      <MessageContentRenderer 
                         content={message.content}
                         className="text-xs sm:text-sm leading-5 sm:leading-6"
                       />
@@ -370,6 +424,38 @@ export default function ChatInterface() {
 
         {/* Input Area - Fixed at bottom */}
         <div className="flex-shrink-0 mt-2 sm:mt-4 relative">
+          {/* Toggle entre Chat e Análise */}
+          <div className="absolute -top-12 left-0 right-0 flex justify-center">
+            <div className="bg-slate-800/80 border border-slate-700/50 rounded-lg p-1 flex gap-1 backdrop-blur-sm">
+              <button
+                type="button"
+                onClick={() => setUseAnalysis(false)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                  !useAnalysis 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                }`}
+                title="Chat tradicional sem gráficos"
+              >
+                <MessageSquare className="h-3 w-3" />
+                <span className="hidden sm:inline">Chat</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setUseAnalysis(true)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                  useAnalysis 
+                    ? 'bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                }`}
+                title="Análise com gráficos e visualizações"
+              >
+                <BarChart3 className="h-3 w-3" />
+                <span className="hidden sm:inline">Análise</span>
+              </button>
+            </div>
+          </div>
           {/* Glass morphism background */}
           <div className="absolute inset-0 bg-slate-900/80 border border-slate-700/50 rounded-xl sm:rounded-2xl"></div>
           
@@ -379,7 +465,10 @@ export default function ChatInterface() {
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Pergunte sobre o setor energético angolano..."
+                placeholder={useAnalysis 
+                  ? "Peça uma análise com gráficos sobre o setor energético..." 
+                  : "Pergunte sobre o setor energético angolano..."
+                }
                 className="min-h-[50px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none pr-12 sm:pr-14 pl-3 sm:pl-4 py-2 sm:py-3 bg-slate-800/50 border-slate-700/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-lg sm:rounded-xl text-sm placeholder:text-slate-500 text-slate-100 font-medium leading-relaxed shadow-inner"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
