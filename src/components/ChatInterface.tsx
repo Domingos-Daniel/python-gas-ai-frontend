@@ -21,6 +21,7 @@ export default function ChatInterface() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [useAnalysis, setUseAnalysis] = useState(false);
+  const [randomQuestions, setRandomQuestions] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -55,6 +56,105 @@ export default function ChatInterface() {
       scrollToBottom();
     }
   }, [isLoading]);
+
+  // Array de questões sobre empresas petrolíferas angolanas
+  const companyQuestions = [
+    "Quais são as principais empresas petrolíferas operando em Angola atualmente?",
+    "Qual é a participação da Sonangol no mercado de petróleo angolano?",
+    "Como é a estrutura de joint ventures entre a Sonangol e empresas internacionais?",
+    "Quais empresas estrangeiras têm maior presença na exploração de petróleo em Angola?",
+    "Quais foram as empresas que venceram os últimos licenciamentos de blocos petrolíferos?",
+    "Como funciona o regime fiscal para empresas petrolíferas em Angola?",
+    "Quais empresas operam nos blocos do pré-sal angolano?",
+    "Qual é o papel da ACREP na regulação das empresas petrolíferas?",
+    "Como se compara a produção da Chevron com a da TotalEnergies em Angola?",
+    "Quais empresas angolanas privadas atuam no setor de petróleo e gás?"
+  ];
+
+  // Função para selecionar 3 questões aleatórias
+  const selectRandomQuestions = () => {
+    const shuffled = [...companyQuestions].sort(() => 0.5 - Math.random());
+    setRandomQuestions(shuffled.slice(0, 3));
+  };
+
+  // Selecionar questões aleatórias quando o componente monta
+  useEffect(() => {
+    selectRandomQuestions();
+  }, []);
+
+  // Função para enviar questão pré-criada
+  const handleQuickQuestion = async (question: string) => {
+    if (isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: question,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
+      
+      const endpoint = useAnalysis ? '/analyze' : '/chat';
+      const detectedChartTypes = detectChartTypes(userMessage.content);
+      
+      const payload = useAnalysis 
+        ? {
+            question: userMessage.content,
+            chart_types: detectedChartTypes,
+            analysis_type: "comprehensive"
+          }
+        : {
+            question: userMessage.content,
+            history: messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }))
+          };
+
+      const response = await fetch(`${apiUrl}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const hasCharts = data.answer && /data:image\/(png|jpeg|jpg|gif);base64,/.test(data.answer);
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data.answer,
+        timestamp: new Date(),
+        hasCharts: hasCharts
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Desculpe, ocorreu um erro ao processar sua mensagem. Verifique se o servidor está funcionando.",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Função para copiar texto (com opção de manter formatação)
   const handleCopyMessage = async (content: string, messageId: string, preserveFormatting = true) => {
@@ -268,22 +368,68 @@ export default function ChatInterface() {
                   </div>
                 </div>
                 
-                {/* Quick suggestions */}
-                <div className="grid grid-cols-1 gap-3 max-w-2xl px-4">
-                  <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 cursor-pointer group">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                        <span className="text-blue-400 text-xs sm:text-sm">📊</span>
-                      </div>
-                      <span className="text-slate-300 text-xs sm:text-sm font-medium group-hover:text-white transition-colors">Dados de produção</span>
+                {/* Quick suggestions - Questões sobre empresas */}
+                <div className="max-w-2xl px-4">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                      <span className="text-emerald-400">🏢</span>
+                      Questões sobre empresas
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      {randomQuestions.map((question, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleQuickQuestion(question)}
+                          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 cursor-pointer group hover:border-emerald-500/50"
+                        >
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                              <span className="text-emerald-400 text-xs sm:text-sm">❓</span>
+                            </div>
+                            <span className="text-slate-300 text-xs sm:text-sm font-medium group-hover:text-white transition-colors leading-relaxed">
+                              {question}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                    <button
+                      onClick={selectRandomQuestions}
+                      className="mt-3 flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/30 rounded-lg text-sm text-slate-300 hover:text-white transition-all duration-200 hover:scale-105"
+                    >
+                      <span className="text-blue-400">🔄</span>
+                      Carregar novas questões
+                    </button>
                   </div>
-                  <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 cursor-pointer group">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                        <span className="text-emerald-400 text-xs sm:text-sm">🏢</span>
+                  
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                      <span className="text-blue-400">📊</span>
+                      Dados de produção
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div
+                        onClick={() => handleQuickQuestion("Quais foram os volumes de produção de petróleo em Angola nos últimos 12 meses?")}
+                        className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 cursor-pointer group hover:border-blue-500/50"
+                      >
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                            <span className="text-blue-400 text-xs sm:text-sm">📈</span>
+                          </div>
+                          <span className="text-slate-300 text-xs sm:text-sm font-medium group-hover:text-white transition-colors">Volumes de produção mensal</span>
+                        </div>
                       </div>
-                      <span className="text-slate-300 text-xs sm:text-sm font-medium group-hover:text-white transition-colors">Sobre empresas</span>
+                      <div
+                        onClick={() => handleQuickQuestion("Mostre a evolução da produção de petróleo angolana nos últimos 5 anos com gráficos")}
+                        className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 cursor-pointer group hover:border-blue-500/50"
+                      >
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                            <span className="text-purple-400 text-xs sm:text-sm">📉</span>
+                          </div>
+                          <span className="text-slate-300 text-xs sm:text-sm font-medium group-hover:text-white transition-colors">Tendências históricas</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
