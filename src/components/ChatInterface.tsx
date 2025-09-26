@@ -74,7 +74,7 @@ export default function ChatInterface() {
       const textToShare = preserveFormatting ? content : content.replace(/[*_`#\[\]()]/g, '');
       if (navigator.share) {
         await navigator.share({
-          title: 'Resposta do Assistente de Energia Angola',
+          title: 'Resposta do Assistente Petrolífero Angolano',
           text: textToShare,
         });
       } else {
@@ -243,10 +243,10 @@ export default function ChatInterface() {
                 </div>
                 
                 <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent mb-3 sm:mb-4 tracking-tight px-4">
-                  Assistente de Energia Angola
+                  Assistente Petrolífero Angolano
                 </h1>
                 <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed font-light mb-6 sm:mb-8 px-4">
-                  Converse sobre o setor energético angolano com informações das principais empresas
+                  Converse sobre o Sector Petrolífero angolano com informações das principais empresas
                 </p>
                 
                 {/* Feature highlights */}
@@ -466,8 +466,8 @@ export default function ChatInterface() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={useAnalysis 
-                  ? "Peça uma análise com gráficos sobre o setor energético..." 
-                  : "Pergunte sobre o setor energético angolano..."
+                  ? "Peça uma análise com gráficos sobre o Sector Petrolífero..." 
+                  : "Pergunte sobre o Sector Petrolífero angolano..."
                 }
                 className="min-h-[50px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none pr-12 sm:pr-14 pl-3 sm:pl-4 py-2 sm:py-3 bg-slate-800/50 border-slate-700/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-lg sm:rounded-xl text-sm placeholder:text-slate-500 text-slate-100 font-medium leading-relaxed shadow-inner"
                 onKeyDown={(e) => {

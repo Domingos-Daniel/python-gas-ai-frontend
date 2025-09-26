@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AI Chatbot Angola",
-  description: "Assistente de energia angolano com IA avançada",
+  description: "Assistente Petrolífero angolano com IA avançada",
   icons: {
     icon: "/favicon.ico",
   },
