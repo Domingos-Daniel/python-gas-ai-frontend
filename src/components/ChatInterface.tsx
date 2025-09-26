@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Bot, User, Loader2, ArrowDown, Copy, Share2, Check, FileText, BarChart3, MessageSquare } from "lucide-react";
+import { Send, Bot, User, Loader2, ArrowDown, Copy, Share2, Check, FileText, BarChart3, MessageSquare, Download, FileSpreadsheet } from "lucide-react";
+import { exportChatMessages, exportAnalysisData, exportChartData, downloadFile } from "@/utils/exportUtils";
 import MessageContentRenderer from "./MessageContentRenderer";
 
 interface Message {
@@ -184,6 +185,73 @@ export default function ChatInterface() {
       }
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
+    }
+  };
+
+  // Funções para exportar dados
+  const handleExportChat = async (format: 'xlsx' | 'csv' | 'json' = 'xlsx') => {
+    try {
+      const chatMessages = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+        hasCharts: msg.hasCharts
+      }));
+      
+      const result = exportChatMessages(chatMessages, { format });
+      downloadFile(result.content, result.filename, result.mimeType);
+    } catch (error) {
+      console.error('Erro ao exportar chat:', error);
+      alert('Erro ao exportar conversação. Por favor, tente novamente.');
+    }
+  };
+
+  const handleExportAnalysis = async (content: string, format: 'xlsx' | 'csv' | 'json' = 'xlsx') => {
+    try {
+      // Extract analysis data from content
+      const analysisData = {
+        executive_summary: content.substring(0, 500),
+        key_insights: content.split('\n').filter(line => line.includes('•') || line.includes('-')).slice(0, 10),
+        competitive_analysis: content.includes('competitiv') ? content : '',
+        risk_assessment: content.includes('risco') || content.includes('riscos') ? content : '',
+        recommendations: content.split('\n').filter(line => line.toLowerCase().includes('recomenda')).slice(0, 5),
+        confidence_score: 85
+      };
+      
+      const result = exportAnalysisData(analysisData, { format });
+      downloadFile(result.content, result.filename, result.mimeType);
+    } catch (error) {
+      console.error('Erro ao exportar análise:', error);
+      alert('Erro ao exportar análise. Por favor, tente novamente.');
+    }
+  };
+
+  const handleExportChart = async (content: string, format: 'xlsx' | 'csv' | 'json' = 'xlsx') => {
+    try {
+      // Extract chart data from content if available
+      const chartMatch = content.match(/data:image\/(png|jpeg|jpg|gif);base64,([^"']+)/);
+      const chartData = chartMatch ? { image: chartMatch[0] } : { data: 'Chart data not available' };
+      
+      const result = exportChartData(chartData, 'analysis', { format });
+      downloadFile(result.content, result.filename, result.mimeType);
+    } catch (error) {
+      console.error('Erro ao exportar gráfico:', error);
+      alert('Erro ao exportar gráfico. Por favor, tente novamente.');
+    }
+  };
+
+  // Função para exportar toda a conversação
+  const handleExportFullChat = async (format: 'xlsx' | 'csv' | 'json' = 'xlsx') => {
+    try {
+      if (messages.length === 0) {
+        alert('Não há mensagens para exportar.');
+        return;
+      }
+      
+      await handleExportChat(format);
+    } catch (error) {
+      console.error('Erro ao exportar conversação completa:', error);
+      alert('Erro ao exportar conversação. Por favor, tente novamente.');
     }
   };
 
@@ -494,6 +562,28 @@ export default function ChatInterface() {
                           <Share2 className="h-3 w-3 text-slate-300 group-hover/btn:text-white" />
                           <span className="text-slate-300 group-hover/btn:text-white font-medium hidden sm:inline">Compartilhar</span>
                         </button>
+
+                        {/* Export Analysis button */}
+                        <button
+                          onClick={() => handleExportAnalysis(message.content, 'xlsx')}
+                          className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 bg-emerald-700/70 hover:bg-emerald-600/70 border border-emerald-600/30 rounded-md sm:rounded-lg text-xs transition-all duration-200 hover:scale-105 backdrop-blur-sm group/btn"
+                          title="Exportar análise para Excel"
+                        >
+                          <FileSpreadsheet className="h-3 w-3 text-emerald-300 group-hover/btn:text-white" />
+                          <span className="text-emerald-300 group-hover/btn:text-white font-medium hidden sm:inline">Excel</span>
+                        </button>
+
+                        {/* Export Chart button (if message has charts) */}
+                        {message.hasCharts && (
+                          <button
+                            onClick={() => handleExportChart(message.content, 'xlsx')}
+                            className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 bg-purple-700/70 hover:bg-purple-600/70 border border-purple-600/30 rounded-md sm:rounded-lg text-xs transition-all duration-200 hover:scale-105 backdrop-blur-sm group/btn"
+                            title="Exportar dados do gráfico"
+                          >
+                            <BarChart3 className="h-3 w-3 text-purple-300 group-hover/btn:text-white" />
+                            <span className="text-purple-300 group-hover/btn:text-white font-medium hidden sm:inline">Gráfico</span>
+                          </button>
+                        )}
                       </div>
                     )}
                     
@@ -555,7 +645,9 @@ export default function ChatInterface() {
         {/* Input Area - Fixed at bottom */}
         <div className="flex-shrink-0 mt-2 sm:mt-4 relative">
           {/* Toggle entre Chat e Análise */}
-            <div className="absolute -top-12 left-0 right-0 flex justify-center">
+            <div className="absolute -top-12 left-0 right-0 flex justify-between items-center px-2">
+              <div></div> {/* Espaço vazio à esquerda */}
+              
               <div className="bg-slate-800/80 border border-slate-700/50 rounded-lg p-1 flex gap-1 backdrop-blur-sm">
                 <button
                   type="button"
@@ -583,6 +675,19 @@ export default function ChatInterface() {
                 >
                   <BarChart3 className="h-3 w-3" />
                   <span className="hidden md:inline">Análise</span>
+                </button>
+              </div>
+              
+              {/* Botão de Exportação Principal */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleExportFullChat('xlsx')}
+                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-2 py-1 rounded text-xs font-medium transition-all duration-200 shadow-lg hover:scale-105 flex items-center gap-1"
+                  title="Exportar conversação completa"
+                >
+                  <Download className="h-3 w-3" />
+                  <span className="hidden sm:inline">Exportar</span>
                 </button>
               </div>
             </div>
