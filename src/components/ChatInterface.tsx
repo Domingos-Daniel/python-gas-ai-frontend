@@ -368,68 +368,55 @@ export default function ChatInterface() {
                   </div>
                 </div>
                 
-                {/* Quick suggestions - Questões sobre empresas */}
+                {/* Quick suggestions - Secção simplificada */}
                 <div className="max-w-2xl px-4">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-slate-200 mb-3 flex items-center gap-2">
-                      <span className="text-emerald-400">🏢</span>
-                      Questões sobre empresas
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                      <span className="text-emerald-400">💡</span>
+                      Sugestões rápidas
                     </h3>
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 gap-2">
                       {randomQuestions.map((question, index) => (
                         <div
                           key={index}
                           onClick={() => handleQuickQuestion(question)}
-                          className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 cursor-pointer group hover:border-emerald-500/50"
+                          className="bg-slate-800/40 border border-slate-700/30 rounded-lg p-3 hover:bg-slate-700/40 transition-all duration-200 cursor-pointer group hover:border-emerald-400/50"
                         >
-                          <div className="flex items-start gap-2 sm:gap-3">
-                            <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                              <span className="text-emerald-400 text-xs sm:text-sm">❓</span>
-                            </div>
-                            <span className="text-slate-300 text-xs sm:text-sm font-medium group-hover:text-white transition-colors leading-relaxed">
-                              {question}
-                            </span>
-                          </div>
+                          <span className="text-slate-300 text-sm font-medium group-hover:text-white transition-colors leading-relaxed">
+                            {question}
+                          </span>
                         </div>
                       ))}
                     </div>
                     <button
                       onClick={selectRandomQuestions}
-                      className="mt-3 flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/30 rounded-lg text-sm text-slate-300 hover:text-white transition-all duration-200 hover:scale-105"
+                      className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-slate-700/30 hover:bg-slate-600/30 border border-slate-600/20 rounded-md text-sm text-slate-400 hover:text-white transition-all duration-200"
                     >
                       <span className="text-blue-400">🔄</span>
-                      Carregar novas questões
+                      Novas questões
                     </button>
                   </div>
                   
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-slate-300 mb-3 flex items-center gap-2">
                       <span className="text-blue-400">📊</span>
-                      Dados de produção
+                      Análises rápidas
                     </h3>
-                    <div className="grid grid-cols-1 gap-3">
-                      <div
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
                         onClick={() => handleQuickQuestion("Quais foram os volumes de produção de petróleo em Angola nos últimos 12 meses?")}
-                        className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 cursor-pointer group hover:border-blue-500/50"
+                        className="bg-slate-800/40 border border-slate-700/30 rounded-lg p-2 hover:bg-slate-700/40 transition-all duration-200 cursor-pointer group hover:border-blue-400/50 text-center"
                       >
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                            <span className="text-blue-400 text-xs sm:text-sm">📈</span>
-                          </div>
-                          <span className="text-slate-300 text-xs sm:text-sm font-medium group-hover:text-white transition-colors">Volumes de produção mensal</span>
-                        </div>
-                      </div>
-                      <div
+                        <div className="text-blue-400 text-xs mb-1">📈</div>
+                        <span className="text-slate-300 text-xs font-medium group-hover:text-white">Produção</span>
+                      </button>
+                      <button
                         onClick={() => handleQuickQuestion("Mostre a evolução da produção de petróleo angolana nos últimos 5 anos com gráficos")}
-                        className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 cursor-pointer group hover:border-blue-500/50"
+                        className="bg-slate-800/40 border border-slate-700/30 rounded-lg p-2 hover:bg-slate-700/40 transition-all duration-200 cursor-pointer group hover:border-purple-400/50 text-center"
                       >
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                            <span className="text-purple-400 text-xs sm:text-sm">📉</span>
-                          </div>
-                          <span className="text-slate-300 text-xs sm:text-sm font-medium group-hover:text-white transition-colors">Tendências históricas</span>
-                        </div>
-                      </div>
+                        <div className="text-purple-400 text-xs mb-1">📉</div>
+                        <span className="text-slate-300 text-xs font-medium group-hover:text-white">Tendências</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -571,37 +558,37 @@ export default function ChatInterface() {
         {/* Input Area - Fixed at bottom */}
         <div className="flex-shrink-0 mt-2 sm:mt-4 relative">
           {/* Toggle entre Chat e Análise */}
-          <div className="absolute -top-12 left-0 right-0 flex justify-center">
-            <div className="bg-slate-800/80 border border-slate-700/50 rounded-lg p-1 flex gap-1 backdrop-blur-sm">
-              <button
-                type="button"
-                onClick={() => setUseAnalysis(false)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                  !useAnalysis 
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                }`}
-                title="Chat tradicional sem gráficos"
-              >
-                <MessageSquare className="h-3 w-3" />
-                <span className="hidden sm:inline">Chat</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setUseAnalysis(true)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                  useAnalysis 
-                    ? 'bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                }`}
-                title="Análise com gráficos e visualizações"
-              >
-                <BarChart3 className="h-3 w-3" />
-                <span className="hidden sm:inline">Análise</span>
-              </button>
+            <div className="absolute -top-12 left-0 right-0 flex justify-center">
+              <div className="bg-slate-800/80 border border-slate-700/50 rounded-lg p-1 flex gap-1 backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={() => setUseAnalysis(false)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                    !useAnalysis 
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  }`}
+                  title="Chat tradicional sem gráficos"
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  <span className="hidden sm:inline">Chat</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setUseAnalysis(true)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                    useAnalysis 
+                      ? 'bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  }`}
+                  title="Análise com gráficos e visualizações"
+                >
+                  <BarChart3 className="h-3 w-3" />
+                  <span className="hidden sm:inline">Análise</span>
+                </button>
+              </div>
             </div>
-          </div>
           {/* Glass morphism background */}
           <div className="absolute inset-0 bg-slate-900/80 border border-slate-700/50 rounded-xl sm:rounded-2xl"></div>
           

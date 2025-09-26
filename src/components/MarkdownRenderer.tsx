@@ -74,13 +74,13 @@ export default function MarkdownRenderer({ content, className = "" }: MarkdownRe
           const isInline = !className;
           if (isInline) {
             return (
-              <code className="bg-slate-800/80 text-emerald-300 px-2 py-1 rounded-md text-sm font-mono border border-slate-700/50 font-semibold">
+              <code className="bg-slate-800/80 text-emerald-300 px-2 py-1 rounded-md text-sm font-mono border border-slate-700/50 font-semibold whitespace-normal break-words max-w-full">
                 {children}
               </code>
             );
           }
           return (
-            <div className="relative mb-4">
+            <div className="relative mb-4 w-full">
               <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 rounded-t-lg flex items-center px-4">
                 <div className="flex space-x-2">
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -88,8 +88,8 @@ export default function MarkdownRenderer({ content, className = "" }: MarkdownRe
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                 </div>
               </div>
-              <pre className="bg-slate-900/90 border border-slate-700/50 pt-10 p-4 rounded-lg overflow-x-auto shadow-lg">
-                <code className="text-sm font-mono text-emerald-300 font-medium leading-6">
+              <pre className="bg-slate-900/90 border border-slate-700/50 pt-10 p-4 rounded-lg overflow-x-auto shadow-lg max-w-full">
+                <code className="text-sm font-mono text-emerald-300 font-medium leading-6 whitespace-pre-wrap break-words">
                   {children}
                 </code>
               </pre>
@@ -123,8 +123,8 @@ export default function MarkdownRenderer({ content, className = "" }: MarkdownRe
         
         // Beautiful tables with alternating rows
         table: ({ children }) => (
-          <div className="overflow-x-auto mb-4 rounded-lg border border-slate-700/50 shadow-lg">
-            <table className="min-w-full">{children}</table>
+          <div className="overflow-x-auto mb-4 rounded-lg border border-slate-700/50 shadow-lg max-w-full">
+            <table className="min-w-full w-full">{children}</table>
           </div>
         ),
         thead: ({ children }) => (

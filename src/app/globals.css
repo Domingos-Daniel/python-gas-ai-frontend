@@ -200,6 +200,35 @@
   border-radius: 3px;
 }
 
+/* Fix for tabbed text responsiveness */
+.prose pre {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.prose code {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  max-width: 100% !important;
+}
+
+/* Handle tab characters specifically */
+.prose pre code {
+  tab-size: 2 !important;
+  -moz-tab-size: 2 !important;
+  -o-tab-size: 2 !important;
+}
+
+/* Ensure responsive tables */
+.prose table {
+  display: block !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
