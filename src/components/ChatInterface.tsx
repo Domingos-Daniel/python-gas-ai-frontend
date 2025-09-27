@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Bot, User, Loader2, ArrowDown, Copy, Share2, Check, FileText, BarChart3, MessageSquare, Download, FileSpreadsheet } from "lucide-react";
+import { Send, Bot, User, Loader2, ArrowDown, Copy, Share2, Check, FileText, BarChart3, MessageSquare, Download, FileSpreadsheet, Paperclip, X } from "lucide-react";
 import { exportChatMessages, exportAnalysisData, exportChartData, downloadFile } from "@/utils/exportUtils";
 import MessageContentRenderer from "./MessageContentRenderer";
 
@@ -23,9 +23,14 @@ export default function ChatInterface() {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [useAnalysis, setUseAnalysis] = useState(false);
   const [randomQuestions, setRandomQuestions] = useState<string[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [documentContext, setDocumentContext] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Scroll automático para a última mensagem
   const scrollToBottom = () => {
@@ -114,7 +119,8 @@ export default function ChatInterface() {
             history: messages.map(msg => ({
               role: msg.role,
               content: msg.content
-            }))
+            })),
+            document_context: documentContext
           };
 
       const response = await fetch(`${apiUrl}${endpoint}`, {
@@ -288,9 +294,104 @@ export default function ChatInterface() {
     return detectedTypes.length > 0 ? detectedTypes : ["pie", "bar"];
   };
 
+  // File upload functions
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Excel
+        'application/vnd.ms-excel', // Excel old
+        'application/pdf', // PDF
+        'text/plain', // TXT
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // Word
+        'application/msword' // Word old
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        alert('Por favor, selecione apenas arquivos Excel, PDF, TXT ou Word.');
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        alert('O arquivo é muito grande. O tamanho máximo permitido é 10MB.');
+        return;
+      }
+      
+      setSelectedFile(file);
+    }
+  };
+
+  const handleFileUpload = async () => {
+    if (!selectedFile) return;
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('context', 'oil_sector_angola');
+      
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
+      
+      const response = await fetch(`${apiUrl}/upload-document`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erro ao fazer upload: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Store document context for future questions
+      setDocumentContext(data.text_content);
+      
+      // Add system message about successful upload
+      const uploadMessage: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: `Documento "${selectedFile.name}" carregado com sucesso! Agora posso usar este documento como contexto para responder suas perguntas sobre o setor petrolífero angolano.`,
+        timestamp: new Date(),
+      };
+      
+      setMessages((prev) => [...prev, uploadMessage]);
+      setSelectedFile(null);
+      
+      // Clear file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+    } catch (error) {
+      console.error('Erro ao fazer upload do documento:', error);
+      alert('Erro ao fazer upload do documento. Por favor, tente novamente.');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !selectedFile) || isLoading) return;
+
+    // If there's a selected file, upload it first
+    if (selectedFile) {
+      await handleFileUpload();
+      if (!input.trim()) return; // If no text input, return after upload
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -695,6 +796,34 @@ export default function ChatInterface() {
           <div className="absolute inset-0 bg-slate-900/80 border border-slate-700/50 rounded-xl sm:rounded-2xl"></div>
           
           <form onSubmit={handleSubmit} className="relative p-3 sm:p-4">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.pdf,.txt,.docx,.doc"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            
+            {/* File preview */}
+            {selectedFile && (
+              <div className="mb-2 p-2 bg-slate-800/50 border border-slate-700/30 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-400" />
+                  <span className="text-sm text-slate-300 truncate">{selectedFile.name}</span>
+                  <span className="text-xs text-slate-500">({Math.round(selectedFile.size / 1024)}KB)</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={removeSelectedFile}
+                  className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
+                  disabled={isUploading}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+            
             <div className="relative">
               <Textarea
                 ref={textareaRef}
@@ -704,7 +833,7 @@ export default function ChatInterface() {
                   ? "Peça uma análise com gráficos sobre o Sector Petrolífero..." 
                   : "Pergunte sobre o Sector Petrolífero angolano..."
                 }
-                className="min-h-[50px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none pr-12 sm:pr-14 pl-3 sm:pl-4 py-2 sm:py-3 bg-slate-800/50 border-slate-700/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-lg sm:rounded-xl text-sm placeholder:text-slate-500 text-slate-100 font-medium leading-relaxed shadow-inner"
+                className="min-h-[50px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none pr-20 sm:pr-24 pl-12 sm:pl-14 py-2 sm:py-3 bg-slate-800/50 border-slate-700/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-lg sm:rounded-xl text-sm placeholder:text-slate-500 text-slate-100 font-medium leading-relaxed shadow-inner"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -712,12 +841,24 @@ export default function ChatInterface() {
                   }
                 }}
               />
+              
+              {/* File upload button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-2 sm:bottom-3 left-3 sm:left-4 h-8 w-8 sm:h-9 sm:w-9 p-0 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/30 rounded-md sm:rounded-lg text-slate-400 hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                disabled={isLoading || isUploading}
+                title="Anexar documento (Excel, PDF, TXT, Word)"
+              >
+                <Paperclip className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              </button>
+              
               <Button
                 type="submit"
-                disabled={!input.trim() || isLoading}
-                className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 h-8 w-8 sm:h-10 sm:w-10 p-0 bg-gradient-to-br from-blue-500 via-purple-600 to-emerald-500 hover:from-blue-600 hover:via-purple-700 hover:to-emerald-600 border-0 rounded-md sm:rounded-lg shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                disabled={(!input.trim() && !selectedFile) || isLoading || isUploading}
+                className="absolute bottom-2 sm:bottom-3 right-3 sm:right-4 h-8 w-8 sm:h-9 sm:w-9 p-0 bg-gradient-to-br from-blue-500 via-purple-600 to-emerald-500 hover:from-blue-600 hover:via-purple-700 hover:to-emerald-600 border-0 rounded-md sm:rounded-lg shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {isLoading ? (
+                {isLoading || isUploading ? (
                   <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                 ) : (
                   <Send className="h-3 w-3 sm:h-4 sm:w-4" />
